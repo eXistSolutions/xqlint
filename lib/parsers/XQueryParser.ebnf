@@ -211,7 +211,9 @@ TreatExpr
          ::= CastableExpr ( 'treat' 'as' SequenceType )?
 CastableExpr
          ::= CastExpr ( 'castable' 'as' SingleType )?
-CastExpr ::= UnaryExpr ( 'cast' 'as' SingleType )?
+CastExpr ::= ArrowExpr ( 'cast' 'as' SingleType )?
+ArrowExpr
+         ::= UnaryExpr ( '=>' ArrowFunctionSpecifier ArgumentList )*
 UnaryExpr
          ::= ( '-' | '+' )* ValueExpr
 ValueExpr
@@ -293,6 +295,9 @@ Predicate
 Lookup	::= '?' KeySpecifier
 UnaryLookup ::= '?' KeySpecifier
 KeySpecifier ::= NCName | IntegerLiteral | ParenthesizedExpr | '*'
+ArrowFunctionSpecifier ::= EQName
+           | VarRef
+           | ParenthesizedExpr
 Literal  ::= NumericLiteral
            | StringLiteral
 NumericLiteral
@@ -1028,6 +1033,7 @@ PrimaryExpr
            | BlockExpr
            | ObjectConstructor
            | ArrayConstructor
+           | StringConstructor
            | UnaryLookup
            | JSONSimpleObjectUnion
 
@@ -1045,6 +1051,15 @@ ArrayConstructor ::= SquareArrayConstructor | CurlyArrayConstructor
 SquareArrayConstructor ::= "[" (ExprSingle ("," ExprSingle)*)? "]"
 
 CurlyArrayConstructor ::= "array" EnclosedExpr
+
+StringConstructor
+         ::= '``[' StringConstructorContent ']``'
+          /* ws: explicit */
+StringConstructorContent
+         ::= StringConstructorChars ( StringConstructorInterpolation StringConstructorChars )*
+          /* ws: explicit */
+StringConstructorInterpolation
+         ::= '`{' Expr? '}`'
 
 BlockExpr
          ::= '{' StatementsAndOptionalExpr '}'
@@ -1119,6 +1134,9 @@ UnprefixedName
 Prefix   ::= NCName
 LocalPart
          ::= NCName
+StringConstructorChars
+         ::= ( Char* - ( Char* ( '`{' | ']``' ) Char* ) ) &( '`{' | ']`' )
+          /* ws: explicit */
 S        ::= [#x0009#x000A#x000D#x0020]+
 CharRef  ::= '&#' [0-9]+ ';'
            | '&#x' [0-9A-Fa-f]+ ';'

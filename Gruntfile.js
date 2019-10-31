@@ -1,10 +1,10 @@
-module.exports = function(grunt) {
-	'use strict';
+module.exports = function (grunt) {
+    'use strict';
 
     require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
     require('time-grunt')(grunt);
-    
-    grunt.registerMultiTask('rex', 'Generate Parsers', function(){
+
+    grunt.registerMultiTask('rex', 'Generate Parsers', function () {
         var fs = require('fs');
         var request = require('request');
         var FormData = require('form-data');
@@ -12,16 +12,16 @@ module.exports = function(grunt) {
         var Q = require('q');
         var done = this.async();
         var promises = [];
-        this.data.grammars.forEach(function(parser){
+        this.data.grammars.forEach(function (parser) {
             var deferred = Q.defer();
             var grammar = fs.readFileSync(parser.source);
             var form = new FormData();
-            form.append('tz', parser.tz, { knownLength: new Buffer(parser.tz).length, contentType: 'text/plain'  });
+            form.append('tz', parser.tz, { knownLength: new Buffer(parser.tz).length, contentType: 'text/plain' });
             form.append('command', parser.command, { knownLength: new Buffer(parser.command).length, contentType: 'text/plain' });
-            form.append('input', grammar, { knownLength : new Buffer(grammar).length, contentType: 'text/plain', filename: path.basename(parser.source) });
+            form.append('input', grammar, { knownLength: new Buffer(grammar).length, contentType: 'text/plain', filename: path.basename(parser.source) });
             var length = form.getLengthSync();
-            var r = request.post('http://www.bottlecaps.de/rex/', function(err, res, body) {
-                if(err) {
+            var r = request.post('https://www.bottlecaps.de/rex/', function (err, res, body) {
+                if (err) {
                     deferred.reject(err);
                 } else {
                     fs.writeFileSync(parser.destination, body);
@@ -33,49 +33,49 @@ module.exports = function(grunt) {
             promises.push(deferred.promise);
         });
         Q.all(promises)
-        .then(function(){
-            done();
-        })
-	    .catch(function(error){
-            grunt.fail.fatal(error);
-	    });
+            .then(function () {
+                done();
+            })
+            .catch(function (error) {
+                grunt.fail.fatal(error);
+            });
     });
- 
+
     grunt.initConfig({
         rex: {
             parsers: {
                 grammars: [
-					{
-						source: 'lib/parsers/XQueryParser.ebnf',
-						destination: 'lib/parsers/XQueryParser.js',
-						command: '-ll 2 -backtrack -tree -javascript -a xqlint',
-						tz: '-60',
-					},
-					{
-						source: 'lib/parsers/JSONiqParser.ebnf',
-						destination: 'lib/parsers/JSONiqParser.js',
-						command: '-ll 2 -backtrack -tree -javascript -a xqlint',
-						tz: '-60',
-					}
+                    {
+                        source: 'lib/parsers/XQueryParser.ebnf',
+                        destination: 'lib/parsers/XQueryParser.js',
+                        command: '-ll 2 -backtrack -tree -javascript -a xqlint',
+                        tz: '-60',
+                    },
+                    {
+                        source: 'lib/parsers/JSONiqParser.ebnf',
+                        destination: 'lib/parsers/JSONiqParser.js',
+                        command: '-ll 2 -backtrack -tree -javascript -a xqlint',
+                        tz: '-60',
+                    }
                 ]
             },
-			lexers: {
+            lexers: {
                 grammars: [
                     {
-						source: 'lib/lexers/XQueryTokenizer.ebnf',
+                        source: 'lib/lexers/XQueryTokenizer.ebnf',
                         destination: 'lib/lexers/XQueryTokenizer.js',
                         command: '-ll 2 -backtrack -tree -javascript -a xqlint',
                         tz: '-60'
                     },
                     {
-						source: 'lib/lexers/JSONiqTokenizer.ebnf',
+                        source: 'lib/lexers/JSONiqTokenizer.ebnf',
                         destination: 'lib/lexers/JSONiqTokenizer.js',
                         command: '-ll 2 -backtrack -tree -javascript -a xqlint',
                         tz: '-60'
                     }
-				]
-			}
-		},
+                ]
+            }
+        },
         jshint: {
             options: {
                 jshintrc: '.jshintrc'
